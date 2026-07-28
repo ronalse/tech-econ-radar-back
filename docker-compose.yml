@@ -1,0 +1,16 @@
+services:
+  back:
+    build: .
+    container_name: tech_econ_radar_back
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      # localhost dentro del contenedor apunta al propio contenedor, no al host.
+      # host.docker.internal permite llegar al Postgres de bbdd/docker-compose.yml
+      # (expuesto en el puerto 5432 del host).
+      DB_HOST: host.docker.internal
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "8000:8000"
