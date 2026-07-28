@@ -14,6 +14,7 @@ Para levantar el servidor:
 """
 
 from contextlib import asynccontextmanager
+import os
 
 from apscheduler.schedulers.background import BackgroundScheduler
 from fastapi import FastAPI
@@ -22,6 +23,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from routers import articles, enrichment, ingestion, filters
 from services.enrichment_service import run_enrichment
 from services.ingestion_service import run_ingestion
+
+# En Render, configura la variable de entorno ENVIRONMENT=production.
+# Localmente, si no existe, se asume development y los docs quedan visibles.
+IS_PRODUCTION = os.getenv("ENVIRONMENT", "development") == "production"
 
 
 scheduler = BackgroundScheduler(timezone="UTC")
@@ -53,7 +58,13 @@ async def lifespan(app: FastAPI):
     scheduler.shutdown()
 
 
-app = FastAPI(title="Tech/Econ Radar API", lifespan=lifespan)
+app = FastAPI(
+    title="Tech/Econ Radar API",
+    lifespan=lifespan,
+    docs_url=None if IS_PRODUCTION else "/docs",
+    redoc_url=None if IS_PRODUCTION else "/redoc",
+    openapi_url=None if IS_PRODUCTION else "/openapi.json",
+)
 
 # Permite que el frontend (Next.js en localhost:3000) llame a esta API.
 # Sin esto, el navegador bloquea las respuestas aunque el servidor
