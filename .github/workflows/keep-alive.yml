@@ -1,0 +1,25 @@
+name: Keep Render Alive
+
+# Hace ping a /health cada 14 minutos para evitar que Render duerma
+# el servicio gratuito (se duerme a los 15 min sin trafico). Esto no
+# reemplaza el scheduler interno del backend (que sigue corriendo la
+# ingesta cada 24h) - solo evita que el contenedor se apague entre medio.
+
+on:
+  schedule:
+    - cron: "*/14 * * * *"
+  workflow_dispatch: # permite dispararlo manualmente desde la pestaña Actions
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping backend /health
+        run: |
+          if [ -z "${{ secrets.RENDER_BACKEND_URL }}" ]; then
+            echo "RENDER_BACKEND_URL no configurado todavia - saltando ping."
+            exit 0
+          fi
+          curl -sf "${{ secrets.RENDER_BACKEND_URL }}/health" \
+            && echo "Ping OK" \
+            || echo "Ping fallo (el servicio puede estar despertando, es normal la primera vez)"
